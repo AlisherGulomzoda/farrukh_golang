@@ -5,6 +5,7 @@ import (
 	greetServiceModul "farrukh_golang/internal/greet"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -21,17 +22,44 @@ func main() {
 	app.Get("/name/:name/gender/:gender", greetHandler.Meet)
 
 	app.Get("/operation/:operation/a/:a/b/:b", func(c fiber.Ctx) error {
-		a := c.Params("a")
-		b := c.Params("b")
+		a1 := c.Params("a")
+		b1 := c.Params("b")
 		operation := c.Params("operation")
-		msg := fmt.Sprintf("operation - %s\n a - %s\n b - %s", operation, a, b)
-		if len(operation) == 0 {
-			return c.Status(fiber.StatusBadRequest).SendString("Ошибочная операция")
+		log.Print(operation)
 
+		if operation != "+" && operation != "-" && operation != "*" && operation != "/" {
+			return c.Status(fiber.StatusBadRequest).SendString("Ошибочная операция")
 		}
 
-		return c.SendString(msg)
+		a, errA := strconv.Atoi(a1)
+		b, errB := strconv.Atoi(b1)
 
+		if errA != nil || errB != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"msg": "ошибка валидации: a и b должны быть целыми числами",
+			})
+		}
+
+		var result int
+		switch operation {
+		case "+":
+			result = a + b
+		case "-":
+			result = a - b
+		case "*":
+			result = a * b
+		case "/":
+			if b == 0 {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"msg": "ошибка: деление на ноль",
+				})
+			}
+			result = a / b
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"msg": fmt.Sprintf("Результат вычисления - %d %s %d = %d", a, operation, b, result),
+		})
 	})
 
 	// Start the server on port 3000
