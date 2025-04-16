@@ -1,13 +1,20 @@
 package math
 
-import "github.com/gofiber/fiber/v3"
+import (
+	"farrukh_golang/internal/math"
+	"github.com/gofiber/fiber/v3"
+)
 
 type Handler interface {
 	Calculate(c fiber.Ctx) error
 }
 
-type handler struct{}
+type handler struct {
+	mathService math.Service
+}
 
-func New() Handler {
-	return &handler{}
+func New(mathService math.Service) Handler {
+	return &handler{
+		mathService: mathService,
+	}
 }

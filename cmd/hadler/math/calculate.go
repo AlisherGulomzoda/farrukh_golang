@@ -1,49 +1,27 @@
 package math
 
 import (
-	"fmt"
+	"errors"
 	"github.com/gofiber/fiber/v3"
-	"log"
-	"strconv"
 )
 
 func (h *handler) Calculate(c fiber.Ctx) error {
-	a1 := c.Params("a")
-	b1 := c.Params("b")
+	a := c.Params("a")
+	b := c.Params("b")
 	operation := c.Params("operation")
-	log.Print(operation)
 
-	if operation != "+" && operation != "-" && operation != "*" && operation != "/" {
-		return c.Status(fiber.StatusBadRequest).SendString("Ошибочная операция")
-	}
-
-	a, errA := strconv.Atoi(a1)
-	b, errB := strconv.Atoi(b1)
-
-	if errA != nil || errB != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"msg": "ошибка валидации: a и b должны быть целыми числами",
-		})
-	}
-
-	var result int
-	switch operation {
-	case "+":
-		result = a + b
-	case "-":
-		result = a - b
-	case "*":
-		result = a * b
-	case "/":
-		if b == 0 {
+	msg, err := h.mathService.Calculate(operation, a, b)
+	if err != nil {
+		if errors.Is(err, fiber.ErrBadRequest) {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"msg": "ошибка: деление на ноль",
+				"msg": msg,
 			})
 		}
-		result = a / b
+
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"msg": "Internal Server Error"})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"msg": fmt.Sprintf("Результат вычисления - %d %s %d = %d", a, operation, b, result),
+		"msg": msg,
 	})
 }
